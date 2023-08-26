@@ -1,6 +1,5 @@
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { useState } from "react";
-import { Link } from "react-router-dom";
 
 // const GET_CHARACTERS = gql`
 //   query Album($characterId: ID!) {
@@ -19,6 +18,15 @@ const GET_USER = gql`
     }
  }
 `
+const GET_USERS = gql`
+  query Users {
+    users {
+      id,
+      name,
+      surname
+    }
+  }
+`
 const CREATE_USER = gql`
   mutation MyMutation($name: String!, $surname: String!) {
     createUser(name: $name, surname: $surname) {
@@ -33,10 +41,16 @@ export const SecondPage = () => {
   const [surname, changeSurname] = useState('')
   // const { data, loading } = useQuery(GET_USER, ({variables: {id: 1}}));
   const { data, loading } = useQuery(GET_USER, { variables: { id: 1 }});
-  const [ createUser ] = useMutation(CREATE_USER);
-  console.log(data)
+  const { data: users, loading: areUsersLoading } = useQuery(GET_USERS);
+  const [ createUser ] = useMutation(CREATE_USER, {
+    refetchQueries: [GET_USERS]
+  });
+  // console.log(users)
   if(loading) {
     return <div>loading...</div>
+  }
+  if(areUsersLoading){
+    return <div>loading2...</div>
   }
   return (
     <div>
@@ -50,6 +64,14 @@ export const SecondPage = () => {
         }}>create user</button>
       </form>
       {/* <Link style={{ color: 'green'}} to={'/'}>go to second page</Link> */}
+      {users.users.map(({id,name,surname})=> {
+        console.log
+        return (
+          <div key={id}>
+            {name} {surname}
+          </div>
+        )
+      })}
     </div>
   )
 }
