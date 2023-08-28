@@ -1,16 +1,19 @@
 import ReactDOM from 'react-dom/client'
 import './index.css'
-import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
-import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { ApolloProvider } from '@apollo/client';
+import { createBrowserRouter } from 'react-router-dom';
 import { First } from './pages/first.tsx';
 import { SecondPage } from './pages/second.tsx';
 import App from './App.tsx';
-const cache = new InMemoryCache({
-});
-const client = new ApolloClient({
-  uri: 'http://localhost:3000/graphql',
-  cache,
-});
+import { client } from './shared/client.ts';
+
+import { loadErrorMessages, loadDevMessages } from "@apollo/client/dev";
+
+if (import.meta.env.DEV) {  // Adds messages only in a dev environment
+  loadDevMessages();
+  loadErrorMessages();
+}
+
 const router = createBrowserRouter([
   {
     path: "/",

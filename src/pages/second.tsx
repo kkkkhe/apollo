@@ -1,6 +1,6 @@
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { useState } from "react";
-
+import { ChildComponent } from "./ui/child";
 // const GET_CHARACTERS = gql`
 //   query Album($characterId: ID!) {
 //     character(id: $characterId) {
@@ -8,49 +8,94 @@ import { useState } from "react";
 //     }
 //   }
 // `;
-
+const USER_FIELDS = gql`
+  fragment UserFields on User {
+    ...UserName
+  }
+  ${ChildComponent.fragments.userName}
+`
 const GET_USER = gql`
-  query MyQuerys($id: Int!) {
+  ${USER_FIELDS}
+  query MyQuery  ($id: Int!) {
     user(id: $id) {
-      id
-      name,
-      surname
+      id,
+      surname,
+      ...UserFields,
+      pet {
+        id,
+        name
+      }
     }
  }
 `
+
 const GET_USERS = gql`
-  query Users {
+  query Users($if: Boolean!) {
     users {
       id,
       name,
-      surname
+      
+      surname @skip(if: $if),
     }
   }
 `
+
 const CREATE_USER = gql`
-  mutation MyMutation($name: String!, $surname: String!) {
-    createUser(name: $name, surname: $surname) {
+  mutation MyMutation($name: String!, $surname: String!, $age: Int) {
+    createUser (name: $name, surname: $surname, age: $age) {
       id,
       name,
-      surname
+      surname,
     }
   }
-`
+`;
+
 export const SecondPage = () => {
   const [name, changeName] = useState('')
+  const [userId, setUserId] = useState(1)
   const [surname, changeSurname] = useState('')
-  // const { data, loading } = useQuery(GET_USER, ({variables: {id: 1}}));
-  const { data, loading } = useQuery(GET_USER, { variables: { id: 1 }});
-  const { data: users, loading: areUsersLoading } = useQuery(GET_USERS);
-  const [ createUser ] = useMutation(CREATE_USER, {
-    refetchQueries: [GET_USERS]
-  });
-  // console.log(users)
-  if(loading) {
-    return <div>loading...</div>
+  const fetchAnotherUser = () => {
+    setUserId(prev => prev + 1)
   }
-  if(areUsersLoading){
-    return <div>loading2...</div>
+  const { data, loading } = useQuery(GET_USER, { variables: { id: userId }});
+  console.log(data)
+
+  // const { data: users, loading: areUsersLoading } = useQuery(GET_USERS, {
+  //   variables: { if: true, id: 2 }
+  // });
+  const [ createUser, { data: createdUser } ] = useMutation(CREATE_USER, {
+    variables: { name, surname },
+    //!=========
+    // refetchQueries: ['Users'], // refetch this query when mutation is done
+    //!=========
+    update: (cache, { data: { createUser }}) => {
+      cache.modify({
+        fields: {
+          users: (oldData = []) => {
+            const newUserRef = cache.writeFragment({
+              data: createUser,
+              fragment: gql`
+                fragment NewUser on User {
+                  id
+                }
+              `
+            });
+            console.log(newUserRef)
+            return [...oldData, newUserRef]
+          }
+        }
+      })
+    } // when modification is done, notify the localstate
+    //!==========
+  });
+  // console.log(createdUser)
+  // console.log(users)
+  // if(areUsersLoading){
+  //   return <div>loading2...</div>
+  // }
+  // console.log(data)
+  if(loading){
+    return <div>loading...</div>
   }
   return (
     <div>
@@ -63,16 +108,18 @@ export const SecondPage = () => {
           createUser({ variables: { name, surname }})
         }}>create user</button>
       </form>
+      <button onClick={() => fetchAnotherUser()}>fetch another user</button>
+      {data.user.name}
       {/* <Link style={{ color: 'green'}} to={'/'}>go to second page</Link> */}
-      {users.users.map(({id,name,surname})=> {
+      {/* {users.users.map(({id,name,surname}: {id: number, name: string, surname: string})=> {
         console.log
         return (
           <div key={id}>
             {name} {surname}
           </div>
         )
-      })}
+      })} */}
+      {/* <ChildComponent userName={data.userName}/> */}
     </div>
   )
 }
-
