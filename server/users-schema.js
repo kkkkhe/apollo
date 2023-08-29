@@ -1,21 +1,20 @@
-import { GraphQLInt, GraphQLObjectType, GraphQLString, GraphQLList } from 'graphql'
+import { GraphQLInt, GraphQLObjectType, GraphQLString, GraphQLList, GraphQLNonNull } from 'graphql'
 import { connection } from './config.js'
 const Type = new GraphQLObjectType({
   name: "User",
   fields: {
-    id: { type: GraphQLInt },
-    name: { type: GraphQLString },
-    surname: { type: GraphQLString },
+    id: { type: new GraphQLNonNull(GraphQLInt) },
+    name: { type: new GraphQLNonNull(GraphQLString) },
+    surname: { type: new GraphQLNonNull(GraphQLString) },
     pet: {
-      type: new GraphQLObjectType({
+      type: new GraphQLNonNull(new GraphQLObjectType({
         name: 'Pet',
         fields: {
-          id: { type: GraphQLInt },
-          name: { type: GraphQLString }
+          id: { type: new GraphQLNonNull(GraphQLInt) },
+          name: { type: new GraphQLNonNull(GraphQLString) }
         }
-      })
+      })),
     }
-    // pet_name: { type: GraphQLString}
   }
 })
 
@@ -33,23 +32,14 @@ export const getUserSchema = {
           }
           if(res[0]){
             const { id, name, surname } = res[0]
-            console.log({
-              id,
-              name,
-              surname,
-              pet: {
-                name: response[0].name,
-                id: response[0].id
-              }
-            })
 
             resolve({
               id,
               name,
               surname,
               pet: {
-                name: response[0].name,
-                id: response[0].id
+                id: response[0].id,
+                name: response[0].name
               }
             })
           }

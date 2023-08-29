@@ -1,6 +1,7 @@
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { useState } from "react";
 import { ChildComponent } from "./ui/child";
+import { graphql } from "../gql";
 // const GET_CHARACTERS = gql`
 //   query Album($characterId: ID!) {
 //     character(id: $characterId) {
@@ -8,26 +9,29 @@ import { ChildComponent } from "./ui/child";
 //     }
 //   }
 // `;
+const UserName = graphql(`
+  fragment UserName on User {
+    name,
+  }
+`)
 const USER_FIELDS = gql`
   fragment UserFields on User {
     ...UserName
   }
-  ${ChildComponent.fragments.userName}
 `
-const GET_USER = gql`
-  ${USER_FIELDS}
+const GET_USER = graphql(`
   query MyQuery  ($id: Int!) {
     user(id: $id) {
       id,
       surname,
-      ...UserFields,
+      name,
       pet {
-        id,
         name
+        ...Pet
       }
     }
  }
-`
+`)
 
 const GET_USERS = gql`
   query Users($if: Boolean!) {
@@ -41,8 +45,8 @@ const GET_USERS = gql`
 `
 
 const CREATE_USER = gql`
-  mutation MyMutation($name: String!, $surname: String!, $age: Int) {
-    createUser (name: $name, surname: $surname, age: $age) {
+  mutation MyMutation($name: String!, $surname: String!) {
+    createUser (name: $name, surname: $surname) {
       id,
       name,
       surname,
@@ -59,7 +63,6 @@ export const SecondPage = () => {
   }
   const { data, loading } = useQuery(GET_USER, { variables: { id: userId }});
   console.log(data)
-
   // const { data: users, loading: areUsersLoading } = useQuery(GET_USERS, {
   //   variables: { if: true, id: 2 }
   // });
@@ -97,6 +100,9 @@ export const SecondPage = () => {
   if(loading){
     return <div>loading...</div>
   }
+  if(!data?.user){
+    return null
+  }
   return (
     <div>
       second
@@ -109,7 +115,7 @@ export const SecondPage = () => {
         }}>create user</button>
       </form>
       <button onClick={() => fetchAnotherUser()}>fetch another user</button>
-      {data.user.name}
+      {/* {data.user.name} */}
       {/* <Link style={{ color: 'green'}} to={'/'}>go to second page</Link> */}
       {/* {users.users.map(({id,name,surname}: {id: number, name: string, surname: string})=> {
         console.log
@@ -119,7 +125,7 @@ export const SecondPage = () => {
           </div>
         )
       })} */}
-      {/* <ChildComponent userName={data.userName}/> */}
+      <ChildComponent pet={data.user.pet}/>
     </div>
   )
 }

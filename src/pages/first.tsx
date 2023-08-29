@@ -2,30 +2,7 @@ import { TypedDocumentNode, gql, useBackgroundQuery, useQuery, useSuspenseQuery,
 import { Suspense, startTransition, useState } from "react";
 // import { Link } from "react-router-dom";
 
-const CHARACTERS: TypedDocumentNode<any, any> = gql`
-  query ExampleQuery($characterId: ID!) {
-    character(id: $characterId) {
-      created,
-      episode {
-        air_date
-      },
-      name
-    }
-  }
-`;
 
-const EPISODES: TypedDocumentNode<any, any> = gql`
-query ExampleQuery($page: Int) {
-  characters(page: $page) {
-      results {
-        created
-        episode {
-          air_date
-        }
-      }
-    }
-  }
-`
 
 export const First = () => {
   const [ id, setId ] = useState(1)
@@ -54,22 +31,16 @@ export const First = () => {
 }
 
 const Test = ({ id, qRef }: { id: number, qRef: QueryReference}) => {
-  const { data, refetch } = useSuspenseQuery(CHARACTERS, { variables: { characterId: id } });
   return (
     <div>
-      {data.character.name} 
       {/* <Test1 qRef={qRef}/> */}
-      <button onClick={() => refetch()}>refetch</button>
     </div>
   )
 }
 const Test2 = ({ id, qRef }: { id: number, qRef: QueryReference}) => {
-  const { data, refetch } = useSuspenseQuery(CHARACTERS, { variables: { characterId: id } });
   return (
     <div>
-      {data.character.name} 
       {/* <Test1 qRef={qRef}/> */}
-      <button onClick={() => refetch()}>refetch</button>
     </div>
   )
 }
